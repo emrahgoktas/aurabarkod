@@ -375,11 +375,30 @@ export async function mockApi<T>(path: string, options: RequestInit = {}): Promi
   // CUSTOMERS
   if (pathname === "/customers/alerts") {
     const s = loadState();
-    const overdue = s.customers.filter((c) => c.overdue);
+    const overdue = s.customers
+      .filter((c) => c.overdue)
+      .map((c) => ({
+        customerId: c.id,
+        name: c.name,
+        balance: c.balance,
+        dueDate: new Date(Date.now() - 3 * 86400000).toISOString().slice(0, 10),
+        daysOverdue: 3,
+      }));
+    const upcoming = s.customers
+      .filter((c) => !c.overdue && c.balance > 0)
+      .map((c) => ({
+        customerId: c.id,
+        name: c.name,
+        balance: c.balance,
+        dueDate: new Date(Date.now() + 2 * 86400000).toISOString().slice(0, 10),
+        daysLeft: 2,
+      }));
     return ok({
       overdueCount: overdue.length,
+      upcomingCount: upcoming.length,
+      overdue,
+      upcoming,
       totalCreditBalance: s.customers.reduce((a, c) => a + c.balance, 0),
-      overdueCustomers: overdue,
     }) as T;
   }
 
